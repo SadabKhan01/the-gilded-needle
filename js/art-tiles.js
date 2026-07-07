@@ -49,10 +49,10 @@ window.G = window.G || {};
       city_royal:  { g: [P.stone3, P.silver, P.linen],     path: [P.stone3, P.silver, P.linen],  wall: [P.stone2, P.linen, P.goldRegal], accent: P.crimson, accent2: P.goldRegal },
       city:        { g: [P.taupe, P.bark3, P.parchment],   path: [P.bark1, P.bark2, P.bark3],    wall: [P.bark1, P.parchment, P.bark2], accent: P.gold, accent2: P.terracotta },
       shop:        { g: [P.bark1, P.bark3, P.parchment],   path: [P.bark1, P.bark2, P.bark3],    wall: [P.bark1, P.parchment, P.linen], accent: P.gold, accent2: P.crimson, plank: true, wainscot: true },
-      mill:        { g: [P.soot, P.bark1, P.bark2],        path: [P.soot, P.bark1, P.bark2],     wall: [P.soot, P.patchBrown, P.stone2], accent: P.poorFade, accent2: P.taupe },
-      warehouse:   { g: [P.river1, P.stone1, P.stone2],    path: [P.stone1, P.stone2, P.stone3], wall: [P.soot, P.patchBrown, P.stone1], accent: P.poorIndigo, accent2: P.plum },
-      grove:       { g: [P.meadow1, P.meadow2, P.meadow3], path: [P.bark1, P.bark2, P.bark3],    wall: [P.meadow1, P.bark2, P.meadow2], accent: P.gold, accent2: P.river3 },
-      vault:       { g: [P.outline, P.soot, P.stone1],     path: [P.outline, P.soot, P.stone1],  wall: [P.outline, P.stone1, P.marketGreen], accent: P.gold, accent2: P.bark2 },
+      mill:        { g: [P.patchBrown, P.taupe, P.parchment], path: [P.bark1, P.bark2, P.bark3], wall: [P.bark1, P.patchBrown, P.parchment], accent: P.poorFade, accent2: P.meadow2 },
+      warehouse:   { g: [P.river1, P.taupe, P.parchment],   path: [P.bark1, P.bark2, P.stone3],  wall: [P.bark1, P.patchBrown, P.taupe], accent: P.poorIndigo, accent2: P.river3 },
+      grove:       { g: [P.meadow1, P.meadow2, P.parchment], path: [P.bark1, P.bark2, P.bark3],  wall: [P.bark1, P.meadow1, P.meadow3], accent: P.gold, accent2: P.terracottaPale },
+      vault:       { g: [P.soot, P.stone1, P.taupe],        path: [P.bark1, P.stone1, P.parchment], wall: [P.outline, P.stone1, P.bark2], accent: P.gold, accent2: P.terracotta },
       palace:      { g: [P.stone3, P.silver, P.linen],     path: [P.crimsonDeep, P.crimson, P.goldRegal], wall: [P.stone2, P.linen, P.goldRegal], accent: P.crimson, accent2: P.goldRegal },
     };
   }

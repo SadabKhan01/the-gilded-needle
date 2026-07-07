@@ -74,19 +74,29 @@ window.G = window.G || {};
   // =====================================================================
 
   var title = {
-    sel: 0, parts: null, t: 0,
+    sel: 0, slotSel: 0, mode: 'main', parts: null, t: 0,
 
     enter: function () {
       this.parts = new Particles(14);
       this.t = 0;
+      this.sel = 0;
+      this.slotSel = 0;
+      this.mode = 'main';
       G.Audio.playMusic('title');
     },
 
     update: function (dt) {
       this.t += dt;
-      var items = this.items();
-      if (G.Input.pressed('ArrowDown') || G.Input.pressed('KeyS')) { this.sel = (this.sel + 1) % items.length; G.Audio.sfx('ui'); }
-      if (G.Input.pressed('ArrowUp') || G.Input.pressed('KeyW')) { this.sel = (this.sel + items.length - 1) % items.length; G.Audio.sfx('ui'); }
+      if (this.mode === 'main') {
+        var items = this.items();
+        if (G.Input.pressed('ArrowDown') || G.Input.pressed('KeyS')) { this.sel = (this.sel + 1) % items.length; G.Audio.sfx('ui'); }
+        if (G.Input.pressed('ArrowUp') || G.Input.pressed('KeyW')) { this.sel = (this.sel + items.length - 1) % items.length; G.Audio.sfx('ui'); }
+      } else {
+        if (G.Input.pressed('ArrowDown') || G.Input.pressed('KeyS')) { this.slotSel = (this.slotSel + 1) % 3; G.Audio.sfx('ui'); }
+        if (G.Input.pressed('ArrowUp') || G.Input.pressed('KeyW')) { this.slotSel = (this.slotSel + 2) % 3; G.Audio.sfx('ui'); }
+        if (G.Input.pressed('Escape')) { this.mode = 'main'; G.Audio.sfx('ui'); }
+        if (G.Input.pressed('Enter') || G.Input.pressed('KeyE')) this.pickSlot(this.slotSel + 1);
+      }
       // drifting leaves
       if (Math.random() < dt * 3) {
         this.parts.spawn({
@@ -134,12 +144,16 @@ window.G = window.G || {};
       G.Utils.text(ctx, G.Data.strings.misc.subtitle, G.W / 2, ly + 30, { size: 14, align: 'center', color: P().linen });
 
       // menu
-      var items = this.items();
-      for (var i = 0; i < items.length; i++) {
-        if (G.UI.button(ctx, {
-          x: G.W / 2 - 62, y: 148 + i * 27, w: 124, h: 21,
-          label: items[i].label, selected: i === this.sel,
-        })) this.pick(items[i].act);
+      if (this.mode === 'main') {
+        var items = this.items();
+        for (var i = 0; i < items.length; i++) {
+          if (G.UI.button(ctx, {
+            x: G.W / 2 - 62, y: 148 + i * 27, w: 124, h: 21,
+            label: items[i].label, selected: i === this.sel,
+          })) this.pick(items[i].act);
+        }
+      } else {
+        this.drawSlots(ctx);
       }
       G.Utils.text(ctx, 'a cozy tailor RPG · made with Thread Gold', G.W / 2, G.H - 16,
         { size: 10, align: 'center', color: P().poorFade });
@@ -149,17 +163,59 @@ window.G = window.G || {};
     pick: function (act) {
       G.Audio.sfx('ui');
       if (act === 'new') {
-        G.newGameState();
-        startFade(function () { G.setScene('intro'); });
+        this.mode = 'new';
+        this.slotSel = 0;
       } else if (act === 'continue') {
-        if (G.Save.load()) {
-          startFade(function () { G.setScene('world', { map: G.state.player.map }); });
-        }
+        this.mode = 'continue';
+        this.slotSel = firstFilledSlot() - 1;
       } else if (act === 'mute') {
         G.Audio.toggleMute();
       }
     },
+
+    drawSlots: function (ctx) {
+      var x = G.W / 2 - 122, y = 134, w = 244, h = 92;
+      G.UI.panel(ctx, x, y, w, h, { title: this.mode === 'new' ? 'Choose a slot' : 'Continue', animStitch: true });
+      for (var i = 0; i < 3; i++) {
+        var slot = i + 1;
+        var s = G.Save.summary(slot);
+        var label = 'Slot ' + slot + '  ';
+        if (s) {
+          var tier = G.Data.tiers[s.tier] ? G.Data.tiers[s.tier].name : 'Poor';
+          label += 'Day ' + s.day + ' · ' + s.gold + 'g · ' + tier;
+        } else {
+          label += 'Empty';
+        }
+        if (this.mode === 'new' && s) label += '  overwrite';
+        if (G.UI.button(ctx, {
+          x: x + 12, y: y + 16 + i * 22, w: w - 24, h: 18,
+          label: label, selected: i === this.slotSel,
+          disabled: this.mode === 'continue' && !s, size: 10,
+        })) this.pickSlot(slot);
+      }
+      G.Utils.text(ctx, 'Esc — back', x + 14, y + h - 14, { size: 10, color: P().taupe, shadow: false });
+    },
+
+    pickSlot: function (slot) {
+      if (this.mode === 'continue') {
+        if (G.Save.load(slot)) {
+          G.Audio.sfx('ui');
+          startFade(function () { G.setScene('world', { map: G.state.player.map }); });
+        }
+      } else if (this.mode === 'new') {
+        G.Audio.sfx('ui');
+        G.Save.activeSlot = slot;
+        G.newGameState();
+        G.Save.save(slot);
+        startFade(function () { G.setScene('intro'); });
+      }
+    },
   };
+
+  function firstFilledSlot() {
+    for (var i = 1; i <= 3; i++) if (G.Save.has(i)) return i;
+    return 1;
+  }
 
   // =====================================================================
   // INTRO — nine beats to Auberlin
@@ -382,12 +438,13 @@ window.G = window.G || {};
   // =====================================================================
 
   var world = {
-    map: null, npcs: [], banner: 0, parts: null, t: 0,
+    map: null, tileCache: null, npcs: [], banner: 0, parts: null, t: 0,
 
     enter: function (params) {
       params = params || {};
       var id = params.map || (G.state ? G.state.player.map : 'shop');
       this.map = G.Maps.get(id);
+      this.tileCache = renderTileCache(this.map);
       this.t = 0;
       G.state.player.map = id;
       if (params.spawn) {
@@ -550,6 +607,11 @@ window.G = window.G || {};
 
       // 4. sewing table / 5. counter / 6. bed (shop only)
       if (map.id === 'shop') {
+        if (map.catalogTable && (nearCluster(f, map.catalogTable, 1) || fch === 'a' || fch === 'd' || fch === 'A')) {
+          G.UI.prompt = 'E — Browse catalog';
+          if (pressE) G.UI.catalog.open();
+          return;
+        }
         if (map.sewingTable && (matches(f, map.sewingTable) || map.charAt(f.tx, f.ty) === 'm' || map.charAt(f.tx, f.ty) === 's')) {
           G.UI.prompt = 'E — Sew';
           if (pressE) G.UI.crafting.open();
@@ -633,16 +695,12 @@ window.G = window.G || {};
 
       G.Camera.begin(ctx);
 
-      // tiles in view
+      // tile layer: prerendered once on map entry, then blitted as a single canvas
       var x0 = Math.max(0, Math.floor(G.Camera.x / 16));
       var y0 = Math.max(0, Math.floor(G.Camera.y / 16));
       var x1 = Math.min(map.w - 1, Math.ceil((G.Camera.x + G.W) / 16));
       var y1 = Math.min(map.h - 1, Math.ceil((G.Camera.y + G.H) / 16));
-      for (var ty = y0; ty <= y1; ty++) {
-        for (var tx = x0; tx <= x1; tx++) {
-          ctx.drawImage(G.Tiles.get(map.charAt(tx, ty), map.theme), tx * 16, ty * 16);
-        }
-      }
+      if (this.tileCache) ctx.drawImage(this.tileCache, 0, 0);
 
       // dressed mannequins wear their garments
       if (G.state.mannequins) {
@@ -753,6 +811,20 @@ window.G = window.G || {};
     return Math.abs(f.tx - spot.tx) <= r && Math.abs(f.ty - spot.ty) <= r;
   }
 
+  function renderTileCache(map) {
+    var c = document.createElement('canvas');
+    c.width = map.w * 16;
+    c.height = map.h * 16;
+    var x = c.getContext('2d');
+    x.imageSmoothingEnabled = false;
+    for (var ty = 0; ty < map.h; ty++) {
+      for (var tx = 0; tx < map.w; tx++) {
+        x.drawImage(G.Tiles.get(map.charAt(tx, ty), map.theme), tx * 16, ty * 16);
+      }
+    }
+    return c;
+  }
+
   function drawNPC(ctx, n) {
     var spr = G.Sprites.anim('npc_' + n.id, n.dir, Math.floor(G.Engine.time * 1.6 + n.x));
     ctx.fillStyle = 'rgba(42,31,43,0.3)';
@@ -761,11 +833,18 @@ window.G = window.G || {};
   }
 
   function drawCustomer(ctx, c) {
-    var moving = c.state !== 'waiting';
+    var sitting = c.state === 'seated';
+    var moving = c.state !== 'waiting' && !sitting;
     var spr = G.Sprites.anim(c.sprite, c.dir, moving ? Math.floor(c.animT / 0.2) : 0);
     ctx.fillStyle = 'rgba(42,31,43,0.3)';
     ctx.fillRect(c.x - 5, c.y + 1, 10, 3);
-    ctx.drawImage(spr, Math.round(c.x - 8), Math.round(c.y - spr.height + 4));
+    if (sitting) {
+      var visibleH = spr.height - 7;
+      ctx.drawImage(spr, 0, 0, spr.width, visibleH,
+        Math.round(c.x - 8), Math.round(c.y - spr.height + 8), spr.width, visibleH);
+    } else {
+      ctx.drawImage(spr, Math.round(c.x - 8), Math.round(c.y - spr.height + 4));
+    }
     if (c.state === 'waiting') {
       // request bubble
       var t = Math.floor(G.Engine.time * 2) % 2;

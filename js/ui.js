@@ -359,6 +359,100 @@ window.G = window.G || {};
   }
 
   // =====================================================================
+  // Catalog book
+  // =====================================================================
+
+  function catalogList() {
+    var out = [];
+    for (var id in G.Data.garments) out.push(G.Data.garments[id]);
+    out.sort(function (a, b) { return a.tier - b.tier || a.price - b.price; });
+    return out;
+  }
+
+  function openCatalog() {
+    var PER_PAGE = 9;
+    var layer = {
+      kind: 'catalog', page: 0, sel: 0,
+      update: function (dt) {
+        var list = catalogList();
+        var pages = Math.ceil(list.length / PER_PAGE);
+        if (G.Input.pressed('ArrowRight') || G.Input.pressed('KeyD')) { this.page = Math.min(pages - 1, this.page + 1); this.sel = 0; G.Audio.sfx('ui'); }
+        if (G.Input.pressed('ArrowLeft') || G.Input.pressed('KeyA')) { this.page = Math.max(0, this.page - 1); this.sel = 0; G.Audio.sfx('ui'); }
+        var count = Math.min(PER_PAGE, list.length - this.page * PER_PAGE);
+        if (G.Input.pressed('ArrowDown') || G.Input.pressed('KeyS')) { this.sel = Math.min(Math.max(0, count - 1), this.sel + 1); G.Audio.sfx('ui'); }
+        if (G.Input.pressed('ArrowUp') || G.Input.pressed('KeyW')) { this.sel = Math.max(0, this.sel - 1); G.Audio.sfx('ui'); }
+      },
+      draw: function (ctx) {
+        var x = 28, y = 18, w = 424, h = 234;
+        panel(ctx, x, y, w, h, { title: 'Cutting Table Catalog', fill: P().parchment, animStitch: true });
+        ctx.fillStyle = P().linen;
+        ctx.fillRect(x + 10, y + 12, w - 20, h - 30);
+        ctx.fillStyle = P().bark2;
+        ctx.fillRect(x + w / 2 - 1, y + 14, 2, h - 34);
+
+        var list = catalogList();
+        var start = this.page * PER_PAGE;
+        for (var i = 0; i < PER_PAGE && start + i < list.length; i++) {
+          var g = list[start + i];
+          var unlocked = G.state.recipes.indexOf(g.id) >= 0;
+          var selected = i === this.sel;
+          var colX = i < 5 ? x + 18 : x + 222;
+          var localY = y + 20 + (i % 5) * 34;
+          var tn = G.Data.tiers[g.tier - 1] ? G.Data.tiers[g.tier - 1].name : '?';
+          if (selected) {
+            ctx.fillStyle = P().parchment;
+            ctx.fillRect(colX - 4, localY - 2, 186, 31);
+            ctx.save();
+            ctx.strokeStyle = P().gold;
+            ctx.setLineDash([3, 2]);
+            ctx.lineDashOffset = -Math.floor(G.Engine.time * 10);
+            ctx.strokeRect(colX - 2.5, localY - 0.5, 181, 28);
+            ctx.restore();
+          }
+          ctx.globalAlpha = unlocked ? 1 : 0.45;
+          drawIcon(ctx, 'garment_' + g.id, colX, localY + 2);
+          G.Utils.text(ctx, g.name, colX + 16, localY, {
+            size: 11, color: unlocked ? P().outline : P().soot, shadow: false,
+          });
+          drawRecipe(ctx, g, colX + 16, localY + 13, unlocked);
+          ctx.globalAlpha = 1;
+          chip(ctx, tn, colX + 134, localY, { color: P().linen });
+          if (unlocked) {
+            drawIcon(ctx, 'coin', colX + 130, localY + 13);
+            G.Utils.text(ctx, String(g.price), colX + 143, localY + 12, { size: 10, color: P().outline, shadow: false });
+          } else {
+            chip(ctx, 'Unlock: ' + (g.quest ? 'Quest' : tn), colX + 100, localY + 13, { color: P().linen });
+          }
+          ctx.fillStyle = P().tierAccent[g.tier - 1] || P().gold;
+          ctx.fillRect(colX, localY + 27, 54, 2);
+        }
+
+        var sel = list[start + this.sel];
+        if (sel) {
+          var desc = G.Utils.wrapText(ctx, sel.desc, w - 44, 10);
+          for (var L = 0; L < Math.min(desc.length, 2); L++) {
+            G.Utils.text(ctx, desc[L], x + 18, y + h - 34 + L * 10, { size: 10, color: P().soot, shadow: false });
+          }
+        }
+        G.Utils.text(ctx, 'Page ' + (this.page + 1) + ' / 2', x + w - 66, y + h - 16, { size: 10, color: P().taupe, shadow: false });
+        G.Utils.text(ctx, '←/→ pages · Esc — close', x + 18, y + h - 16, { size: 10, color: P().taupe, shadow: false });
+      },
+    };
+    pushLayer(layer);
+  }
+
+  function drawRecipe(ctx, garment, x, y, unlocked) {
+    var rx = x;
+    for (var fid in garment.recipe) {
+      drawIcon(ctx, 'fabric_' + fid, rx, y - 2);
+      G.Utils.text(ctx, '×' + garment.recipe[fid], rx + 12, y - 1, {
+        size: 10, color: unlocked ? P().outline : P().soot, shadow: false,
+      });
+      rx += 31;
+    }
+  }
+
+  // =====================================================================
   // Inventory
   // =====================================================================
 
@@ -586,33 +680,89 @@ window.G = window.G || {};
         if (items.length === 1) {
           G.Utils.text(ctx, 'Nothing sewn yet — the shelves wait.', gx, gy + 8, { size: 12, color: P().soot, shadow: false });
         }
-        // preview alcove (right)
+        // try-on alcove (right), inspired by the wardrobe reference
         var px0 = x + 258, py0 = y + 16, pw = 120, ph = 172;
-        ctx.fillStyle = P().parchment;
+        ctx.fillStyle = P().linen;
         ctx.fillRect(px0, py0, pw, ph);
         ctx.strokeStyle = P().bark1;
         ctx.strokeRect(px0 + 0.5, py0 + 0.5, pw - 1, ph - 1);
-        // warm string lights
+        ctx.fillStyle = P().parchment;
+        G.Utils.roundRect(ctx, px0 + 12, py0 + 18, pw - 24, ph - 38, 28);
+        ctx.fill();
+        ctx.strokeStyle = P().bark2;
+        ctx.stroke();
+        // gingham canopy and bow
+        ctx.fillStyle = P().parchment;
+        ctx.fillRect(px0 + 8, py0 + 4, pw - 16, 16);
+        for (var gy2 = py0 + 5; gy2 < py0 + 20; gy2 += 6) {
+          ctx.fillStyle = P().bark3;
+          ctx.fillRect(px0 + 8, gy2, pw - 16, 1);
+        }
+        for (var gx2 = px0 + 12; gx2 < px0 + pw - 10; gx2 += 10) {
+          ctx.fillStyle = P().bark3;
+          ctx.fillRect(gx2, py0 + 4, 1, 16);
+        }
+        ctx.fillStyle = P().gold;
+        ctx.fillRect(px0 + pw / 2 - 8, py0 + 7, 16, 7);
+        ctx.fillStyle = P().linen;
+        ctx.fillRect(px0 + pw / 2 - 2, py0 + 8, 4, 5);
+        // vines and warm string lights
+        ctx.fillStyle = P().meadow2;
+        for (var v = 0; v < 9; v++) {
+          ctx.fillRect(px0 + 7 + (v % 3) * 3, py0 + 24 + v * 8, 2, 2);
+          ctx.fillRect(px0 + pw - 12 - (v % 3) * 3, py0 + 22 + v * 8, 2, 2);
+        }
         for (var L = 0; L < 5; L++) {
           ctx.fillStyle = P().gold;
-          ctx.fillRect(px0 + 12 + L * 22, py0 + 6 + (L % 2) * 2, 2, 2);
+          ctx.fillRect(px0 + 22 + L * 15, py0 + 34 + (L % 2) * 3, 2, 2);
         }
-        // the dress form, large
-        var fx = px0 + pw / 2, fy = py0 + 34;
+        // chibi paper-doll mannequin
+        var fx = px0 + pw / 2, fy = py0 + 52;
+        ctx.fillStyle = 'rgba(42,31,43,0.16)';
+        ctx.fillRect(fx - 26, py0 + ph - 40, 52, 7);
+        ctx.fillStyle = P().skinShade;
+        ctx.fillRect(fx - 20, fy + 31, 7, 30);
+        ctx.fillRect(fx + 13, fy + 31, 7, 30);
+        ctx.fillRect(fx - 23, fy + 17, 6, 24);
+        ctx.fillRect(fx + 17, fy + 17, 6, 24);
+        ctx.fillStyle = P().skin;
+        ctx.fillRect(fx - 18, fy + 29, 7, 30);
+        ctx.fillRect(fx + 11, fy + 29, 7, 30);
+        ctx.fillRect(fx - 21, fy + 15, 6, 24);
+        ctx.fillRect(fx + 15, fy + 15, 6, 24);
+        ctx.fillRect(fx - 14, fy + 7, 28, 42);
+        G.Utils.roundRect(ctx, fx - 16, fy - 22, 32, 30, 10);
+        ctx.fill();
         ctx.fillStyle = P().bark1;
-        ctx.fillRect(fx - 12, py0 + ph - 26, 24, 5);       // base
-        ctx.fillRect(fx - 2, py0 + ph - 50, 4, 26);        // pole
-        ctx.fillStyle = P().linen;
-        ctx.fillRect(fx - 16, fy + 8, 32, 12);             // shoulders
-        ctx.fillRect(fx - 12, fy, 24, 58);                 // torso
-        ctx.fillStyle = P().bark3;
-        ctx.fillRect(fx - 3, fy - 6, 6, 6);                // neck cap
+        ctx.fillRect(fx - 18, fy - 24, 36, 9);
+        ctx.fillRect(fx - 21, fy - 15, 6, 23);
+        ctx.fillRect(fx + 15, fy - 15, 6, 23);
+        ctx.fillStyle = P().outline;
+        ctx.fillRect(fx - 8, fy - 9, 4, 4);
+        ctx.fillRect(fx + 5, fy - 9, 4, 4);
+        ctx.fillStyle = P().crimson;
+        ctx.fillRect(fx - 13, fy - 18, 4, 3);
+        ctx.fillStyle = P().poorIndigo;
+        ctx.fillRect(fx + 9, fy - 17, 4, 3);
+        ctx.fillStyle = P().parchment;
+        ctx.fillRect(fx - 17, fy + 64, 13, 5);
+        ctx.fillRect(fx + 4, fy + 64, 13, 5);
+        // stand base behind the previewed outfit
+        ctx.fillStyle = P().bark1;
+        ctx.fillRect(fx - 18, py0 + ph - 32, 36, 4);
+        ctx.fillRect(fx - 2, py0 + ph - 58, 4, 26);
         var sel2 = items[this.sel];
         if (sel2 && sel2.id) {
           var big = G.Sprites.get('garment_' + sel2.id);
-          ctx.drawImage(big, 0, 0, 12, 12, fx - 24, fy + 2, 48, 48);
+          ctx.drawImage(big, 0, 0, 12, 12, fx - 28, fy + 6, 56, 56);
+        } else {
+          ctx.fillStyle = P().crimson;
+          ctx.fillRect(fx - 13, fy + 13, 26, 25);
+          ctx.fillStyle = P().linen;
+          ctx.fillRect(fx - 8, fy + 17, 3, 3);
+          ctx.fillRect(fx + 5, fy + 17, 3, 3);
         }
-        G.Utils.text(ctx, sel2 ? sel2.name : '', px0 + pw / 2, py0 + ph - 16, { size: 10, align: 'center', color: P().outline, shadow: false });
+        G.Utils.text(ctx, sel2 ? sel2.name : 'Try-on doll', px0 + pw / 2, py0 + ph - 16, { size: 10, align: 'center', color: P().outline, shadow: false });
         // footer
         if (button(ctx, { x: x + 258, y: y + h - 34, w: 120, h: 20, label: 'Dress (E)', selected: true })) {
           this.dress();
@@ -814,6 +964,7 @@ window.G = window.G || {};
     },
 
     crafting: { open: openCrafting },
+    catalog: { open: openCatalog },
     wardrobe: { open: openWardrobe },
     inventory: { open: openInventory },
     shopSell: { open: openShopSell },

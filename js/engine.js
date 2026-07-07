@@ -312,11 +312,32 @@ G.TILE = 16;
 
   G.Save = {
     KEY: 'gilded_needle_save',
+    SLOT_PREFIX: 'gilded_needle_save_slot_',
+    activeSlot: 1,
 
-    save: function () {
-      if (!G.state) return false;
+    key: function (slot) {
+      return this.SLOT_PREFIX + normalizeSlot(slot || this.activeSlot);
+    },
+
+    migrateLegacy: function () {
       try {
-        localStorage.setItem(this.KEY, JSON.stringify(G.state));
+        var slotKey = this.key(1);
+        if (localStorage.getItem(slotKey) === null) {
+          var raw = localStorage.getItem(this.KEY);
+          if (raw !== null) {
+            localStorage.setItem(slotKey, raw);
+            localStorage.removeItem(this.KEY);
+          }
+        }
+      } catch (e) { /* no-op */ }
+    },
+
+    save: function (slot) {
+      if (!G.state) return false;
+      slot = normalizeSlot(slot || this.activeSlot);
+      this.activeSlot = slot;
+      try {
+        localStorage.setItem(this.key(slot), JSON.stringify(G.state));
         return true;
       } catch (e) {
         console.warn('G.Save.save failed:', e);
@@ -324,9 +345,11 @@ G.TILE = 16;
       }
     },
 
-    load: function () {
+    load: function (slot) {
+      this.migrateLegacy();
+      slot = normalizeSlot(slot || this.activeSlot);
       var raw;
-      try { raw = localStorage.getItem(this.KEY); } catch (e) { return false; }
+      try { raw = localStorage.getItem(this.key(slot)); } catch (e) { return false; }
       if (!raw) return false;
       var data;
       try { data = JSON.parse(raw); } catch (e) { return false; }
@@ -335,17 +358,51 @@ G.TILE = 16;
       if (typeof G.newGameState === 'function') G.newGameState();
       if (!G.state || typeof G.state !== 'object') G.state = {};
       deepMerge(G.state, data);
+      this.activeSlot = slot;
       return true;
     },
 
-    has: function () {
-      try { return localStorage.getItem(this.KEY) !== null; } catch (e) { return false; }
+    has: function (slot) {
+      this.migrateLegacy();
+      try {
+        if (slot) return localStorage.getItem(this.key(slot)) !== null;
+        for (var i = 1; i <= 3; i++) if (localStorage.getItem(this.key(i)) !== null) return true;
+        return false;
+      } catch (e) { return false; }
     },
 
-    clear: function () {
-      try { localStorage.removeItem(this.KEY); } catch (e) { /* no-op */ }
+    summary: function (slot) {
+      this.migrateLegacy();
+      var raw;
+      try { raw = localStorage.getItem(this.key(slot)); } catch (e) { return null; }
+      if (!raw) return null;
+      var data;
+      try { data = JSON.parse(raw); } catch (e) { return null; }
+      if (!data || typeof data !== 'object') return null;
+      return {
+        day: data.day || 1,
+        gold: data.gold || 0,
+        tier: data.tier || 0,
+        map: data.player && data.player.map ? data.player.map : 'shop',
+      };
+    },
+
+    clear: function (slot) {
+      try {
+        if (slot) localStorage.removeItem(this.key(slot));
+        else {
+          localStorage.removeItem(this.KEY);
+          for (var i = 1; i <= 3; i++) localStorage.removeItem(this.key(i));
+        }
+      } catch (e) { /* no-op */ }
     },
   };
+
+  function normalizeSlot(slot) {
+    slot = Number(slot) | 0;
+    if (slot < 1 || slot > 3) slot = 1;
+    return slot;
+  }
 
   // =====================================================================
   // G.Audio — procedural WebAudio chiptune (art.md §8) + SFX (art.md §9)
