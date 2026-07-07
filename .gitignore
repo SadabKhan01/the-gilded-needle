@@ -1,0 +1,5 @@
+# graphify knowledge-graph output (rebuild locally with /graphify)
+graphify-out/
+
+# OS noise
+.DS_Store
