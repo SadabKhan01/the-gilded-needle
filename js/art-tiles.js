@@ -14,6 +14,9 @@ window.G = window.G || {};
     '#': 1, 'B': 1, 'w': 1, 't': 1, 'F': 1, 'l': 1, 'c': 1,
     'T': 1, 'S': 1, 'm': 1, 'r': 1, 'h': 1, 'e': 1, '_': 1, ' ': 1,
     'o': 1, 'k': 1, 'M': 1, 'C': 1, 'R': 1, 'P': 1, 'W': 1, 'Q': 1,
+    // atelier detail pass: fireplace/sofa right halves, cutting table
+    // left/mid/right, sewing side table, register, hanging plant
+    'K': 1, 'O': 1, 'a': 1, 'd': 1, 'A': 1, 's': 1, 'N': 1, 'i': 1,
   };
 
   // fixed speckle patterns (deterministic — tiles must not shimmer per load)
@@ -45,7 +48,7 @@ window.G = window.G || {};
       city_noble:  { g: [P.taupe, P.stone3, P.silver],     path: [P.taupe, P.stone3, P.silver],  wall: [P.stone1, P.parchment, P.linen], accent: P.plum, accent2: P.silver },
       city_royal:  { g: [P.stone3, P.silver, P.linen],     path: [P.stone3, P.silver, P.linen],  wall: [P.stone2, P.linen, P.goldRegal], accent: P.crimson, accent2: P.goldRegal },
       city:        { g: [P.taupe, P.bark3, P.parchment],   path: [P.bark1, P.bark2, P.bark3],    wall: [P.bark1, P.parchment, P.bark2], accent: P.gold, accent2: P.terracotta },
-      shop:        { g: [P.bark1, P.bark2, P.bark3],       path: [P.bark1, P.bark2, P.bark3],    wall: [P.bark1, P.parchment, P.linen], accent: P.gold, accent2: P.crimson },
+      shop:        { g: [P.bark1, P.bark3, P.parchment],   path: [P.bark1, P.bark2, P.bark3],    wall: [P.bark1, P.parchment, P.linen], accent: P.gold, accent2: P.crimson, plank: true, wainscot: true },
       mill:        { g: [P.soot, P.bark1, P.bark2],        path: [P.soot, P.bark1, P.bark2],     wall: [P.soot, P.patchBrown, P.stone2], accent: P.poorFade, accent2: P.taupe },
       warehouse:   { g: [P.river1, P.stone1, P.stone2],    path: [P.stone1, P.stone2, P.stone3], wall: [P.soot, P.patchBrown, P.stone1], accent: P.poorIndigo, accent2: P.plum },
       grove:       { g: [P.meadow1, P.meadow2, P.meadow3], path: [P.bark1, P.bark2, P.bark3],    wall: [P.meadow1, P.bark2, P.meadow2], accent: P.gold, accent2: P.river3 },
@@ -60,6 +63,17 @@ window.G = window.G || {};
   function rr(x, xx, yy, w, h, c) { x.fillStyle = c; x.fillRect(xx, yy, w, h); }
 
   function drawGround(x, t, variant) {
+    if (t.plank) { // honey plank flooring — board seams + grain
+      rr(x, 0, 0, 16, 16, t.g[1]);
+      for (var by = 3; by < 16; by += 4) rr(x, 0, by, 16, 1, t.g[0]);
+      // board joints, staggered per variant so rows read as offset planks
+      if (variant) { rr(x, 5, 0, 1, 3, t.g[0]); rr(x, 11, 8, 1, 3, t.g[0]); }
+      else { rr(x, 10, 4, 1, 3, t.g[0]); rr(x, 3, 12, 1, 3, t.g[0]); }
+      // grain + warm highlights
+      px(x, 2, 1, t.g[2]); px(x, 8, 6, t.g[2]); px(x, 13, 9, t.g[2]); px(x, 6, 13, t.g[2]);
+      px(x, 12, 1, G.Palette.bark2); px(x, 4, 5, G.Palette.bark2); px(x, 9, 13, G.Palette.bark2);
+      return;
+    }
     rr(x, 0, 0, 16, 16, t.g[1]);
     var sp = variant ? SPECK_B : SPECK_A;
     for (var i = 0; i < sp.length; i++) px(x, sp[i][0], sp[i][1], i % 2 ? t.g[0] : t.g[2]);
@@ -90,6 +104,17 @@ window.G = window.G || {};
     },
 
     '#': function (x, t) {
+      if (t.wainscot) { // cream plaster over walnut wainscot panelling
+        rr(x, 0, 0, 16, 16, t.wall[1]);
+        px(x, 4, 3, t.wall[2]); px(x, 11, 5, t.wall[2]); px(x, 7, 7, G.Palette.taupe);
+        rr(x, 0, 9, 16, 1, G.Palette.bark3);       // chair rail
+        rr(x, 0, 10, 16, 6, G.Palette.bark1);      // walnut panel
+        rr(x, 3, 11, 1, 4, G.Palette.outline);     // grooves
+        rr(x, 8, 11, 1, 4, G.Palette.outline);
+        rr(x, 13, 11, 1, 4, G.Palette.outline);
+        rr(x, 0, 10, 16, 1, G.Palette.bark2);
+        return;
+      }
       rr(x, 0, 0, 16, 16, t.wall[1]);
       rr(x, 0, 0, 16, 2, t.wall[2]);
       rr(x, 0, 14, 16, 2, t.wall[0]);
@@ -221,6 +246,28 @@ window.G = window.G || {};
     },
 
     'm': function (x, t) {
+      if (t.plank) { // the shop: a black sewing machine with gingham cloth in work
+        var P = G.Palette;
+        drawGround(x, t, false);
+        rr(x, 1, 5, 14, 8, P.bark3);              // work table
+        rr(x, 1, 5, 14, 1, P.parchment);
+        rr(x, 1, 12, 14, 1, P.bark1);
+        rr(x, 2, 13, 2, 2, P.bark1); rr(x, 12, 13, 2, 2, P.bark1);
+        rr(x, 4, 1, 3, 5, P.outline);             // machine pillar
+        rr(x, 4, 1, 8, 2, P.outline);             // arm
+        rr(x, 10, 2, 2, 3, P.outline);            // needle head
+        px(x, 10, 5, P.silver);                   // needle
+        rr(x, 3, 5, 5, 2, P.outline);             // base
+        px(x, 5, 2, P.goldRegal);                 // gold filigree
+        px(x, 12, 1, P.goldRegal);                // balance wheel
+        // red gingham cloth feeding through, spilling off the table
+        rr(x, 8, 6, 7, 4, P.crimson);
+        px(x, 9, 7, P.linen); px(x, 11, 7, P.linen); px(x, 13, 7, P.linen);
+        px(x, 10, 8, P.linen); px(x, 12, 8, P.linen); px(x, 14, 8, P.linen);
+        rr(x, 12, 10, 3, 3, P.crimson);
+        px(x, 13, 11, P.linen);
+        return;
+      }
       drawGround(x, t, false);
       rr(x, 2, 3, 12, 11, G.Palette.stone2);      // loom body
       rr(x, 2, 3, 12, 2, G.Palette.stone3);
@@ -335,52 +382,96 @@ window.G = window.G || {};
       px(x, 3, 13, P.terracotta); px(x, 8, 14, P.terracotta); px(x, 14, 13, P.terracotta);
     },
 
-    'o': function (x, t) { // cream sofa with a plaid cushion
+    'o': function (x, t) { // sofa LEFT half — arm, back cushion, gingham pillow
       var P = G.Palette;
       rr(x, 0, 0, 16, 16, P.parchment);   // sits on the rug
-      rr(x, 0, 0, 16, 1, P.terracotta);
-      rr(x, 1, 2, 14, 5, P.linen);        // backrest
-      rr(x, 1, 2, 14, 1, '#fbf3dd');
-      rr(x, 1, 7, 14, 6, P.parchment);    // seat
-      rr(x, 1, 7, 14, 1, P.taupe);
-      rr(x, 0, 3, 2, 10, P.bark2);        // arms
-      rr(x, 14, 3, 2, 10, P.bark2);
-      rr(x, 1, 13, 14, 2, P.bark1);       // wooden base
-      rr(x, 4, 4, 5, 4, P.crimson);       // plaid pillow
-      px(x, 5, 5, P.linen); px(x, 7, 5, P.linen);
-      px(x, 6, 6, P.linen); px(x, 5, 7, P.linen); px(x, 7, 7, P.linen);
-      rr(x, 0, 2, 1, 12, P.outline); rr(x, 15, 2, 1, 12, P.outline);
+      rr(x, 0, 5, 16, 1, P.terracottaPale);
+      rr(x, 3, 2, 13, 5, P.linen);        // backrest (continues right)
+      rr(x, 3, 2, 13, 1, '#fbf3dd');
+      rr(x, 8, 3, 1, 3, P.parchment);     // cushion split
+      rr(x, 3, 7, 13, 6, P.parchment);    // seat
+      rr(x, 3, 7, 13, 1, P.taupe);
+      rr(x, 0, 2, 3, 11, P.bark2);        // left arm
+      rr(x, 0, 2, 3, 1, P.bark3);
+      rr(x, 0, 2, 1, 11, P.outline);
+      rr(x, 3, 13, 13, 2, P.bark1);       // wooden base
+      rr(x, 5, 4, 6, 5, P.crimson);       // gingham pillow
+      px(x, 6, 5, P.linen); px(x, 8, 5, P.linen); px(x, 10, 5, P.linen);
+      px(x, 7, 6, P.linen); px(x, 9, 6, P.linen);
+      px(x, 6, 7, P.linen); px(x, 8, 7, P.linen); px(x, 10, 7, P.linen);
+      rr(x, 5, 4, 6, 1, P.crimsonDeep);
     },
 
-    'k': function (x, t) { // stone fireplace, fire crackling
+    'O': function (x, t) { // sofa RIGHT half — plaid throw over the back, right arm
       var P = G.Palette;
-      rr(x, 0, 0, 16, 16, P.stone2);
-      px(x, 2, 1, P.stone3); px(x, 7, 2, P.stone1); px(x, 12, 1, P.stone3);
-      px(x, 4, 13, P.stone1); px(x, 11, 14, P.stone3); px(x, 1, 8, P.stone1);
-      rr(x, 3, 5, 10, 10, P.outline);            // hearth opening
-      rr(x, 4, 10, 8, 3, P.bark1);               // logs
-      rr(x, 5, 12, 6, 1, P.bark2);
-      rr(x, 6, 7, 4, 4, P.terracotta);           // fire
-      rr(x, 7, 6, 2, 4, P.goldRegal);
-      px(x, 7, 5, P.gold); px(x, 8, 7, '#fbf3dd');
-      px(x, 5, 9, P.goldRegal); px(x, 10, 8, P.terracotta);
-      rr(x, 0, 0, 16, 1, P.stone3);
-      rr(x, 0, 15, 16, 1, P.stone1);
+      rr(x, 0, 0, 16, 16, P.parchment);
+      rr(x, 0, 5, 16, 1, P.terracottaPale);
+      rr(x, 0, 2, 13, 5, P.linen);        // backrest (continues left)
+      rr(x, 0, 2, 13, 1, '#fbf3dd');
+      rr(x, 6, 3, 1, 3, P.parchment);
+      rr(x, 0, 7, 13, 6, P.parchment);    // seat
+      rr(x, 0, 7, 13, 1, P.taupe);
+      rr(x, 13, 2, 3, 11, P.bark2);       // right arm
+      rr(x, 13, 2, 3, 1, P.bark3);
+      rr(x, 15, 2, 1, 11, P.outline);
+      rr(x, 0, 13, 13, 2, P.bark1);
+      // folded plaid throw draped on the back
+      rr(x, 2, 1, 7, 6, P.plum);
+      rr(x, 2, 3, 7, 1, P.silver); rr(x, 2, 5, 7, 1, P.silver);
+      rr(x, 4, 1, 1, 6, P.silver); rr(x, 7, 1, 1, 6, P.silver);
+      rr(x, 2, 1, 7, 1, P.plumDeep);
     },
 
-    'M': function (x, t) { // dress-form mannequin (garments overlaid by scenes)
+    'k': function (x, t) { // stone fireplace LEFT — arch stones, fire spans the seam
+      var P = G.Palette;
+      rr(x, 0, 0, 16, 16, P.stone1);
+      // rounded fieldstones
+      rr(x, 0, 0, 5, 4, P.stone2); rr(x, 6, 0, 6, 3, P.stone3); rr(x, 13, 0, 3, 4, P.stone2);
+      rr(x, 0, 5, 4, 5, P.stone3); rr(x, 0, 11, 5, 5, P.stone2);
+      px(x, 2, 2, '#fbf3dd'); px(x, 8, 1, P.stone2); px(x, 1, 7, P.stone2); px(x, 2, 13, P.stone3);
+      rr(x, 5, 4, 11, 12, P.outline);            // hearth opening (opens rightward)
+      rr(x, 6, 12, 10, 2, P.bark1);              // log
+      px(x, 7, 12, P.bark3);
+      rr(x, 10, 8, 6, 4, P.terracotta);          // fire — right edge, meets K
+      rr(x, 12, 6, 4, 5, P.goldRegal);
+      rr(x, 14, 5, 2, 3, P.gold);
+      px(x, 13, 9, '#fbf3dd'); px(x, 11, 7, P.gold);
+      px(x, 8, 14, P.goldRegal);                 // ember
+    },
+
+    'K': function (x, t) { // stone fireplace RIGHT — mirror of k
+      var P = G.Palette;
+      rr(x, 0, 0, 16, 16, P.stone1);
+      rr(x, 11, 0, 5, 4, P.stone2); rr(x, 4, 0, 6, 3, P.stone3); rr(x, 0, 0, 3, 4, P.stone2);
+      rr(x, 12, 5, 4, 5, P.stone3); rr(x, 11, 11, 5, 5, P.stone2);
+      px(x, 13, 2, '#fbf3dd'); px(x, 7, 1, P.stone2); px(x, 14, 7, P.stone2); px(x, 13, 13, P.stone3);
+      rr(x, 0, 4, 11, 12, P.outline);
+      rr(x, 0, 12, 10, 2, P.bark1);
+      px(x, 8, 12, P.bark3);
+      rr(x, 0, 8, 6, 4, P.terracotta);
+      rr(x, 0, 6, 4, 5, P.goldRegal);
+      rr(x, 0, 5, 2, 3, P.gold);
+      px(x, 2, 9, '#fbf3dd'); px(x, 4, 7, P.gold);
+      px(x, 7, 14, P.goldRegal);
+    },
+
+    'M': function (x, t) { // dress-form mannequin in a gingham top (scenes overlay owned garments)
       var P = G.Palette;
       drawGround(x, t, false);
-      rr(x, 7, 13, 2, 2, P.bark1);               // base
+      rr(x, 6, 13, 4, 1, P.bark2);               // tripod base
       rr(x, 5, 14, 6, 1, P.bark1);
-      rr(x, 7, 10, 2, 3, P.bark2);               // pole
-      rr(x, 5, 3, 6, 7, P.linen);                // torso
-      rr(x, 4, 4, 8, 3, P.linen);                // shoulders/bust
-      rr(x, 6, 9, 4, 1, '#fbf3dd');
-      px(x, 7, 2, P.bark3); px(x, 8, 2, P.bark3); // neck cap
-      rr(x, 4, 4, 1, 3, P.outline); rr(x, 11, 4, 1, 3, P.outline);
-      rr(x, 5, 3, 6, 1, P.outline); rr(x, 5, 10, 6, 1, P.outline);
-      px(x, 6, 5, P.taupe);                       // seam shading
+      rr(x, 7, 11, 2, 2, P.bark2);               // pole
+      rr(x, 4, 3, 8, 8, P.linen);                // torso
+      rr(x, 5, 10, 6, 1, P.linen);               // waist taper
+      rr(x, 5, 2, 6, 1, P.linen);                // shoulder line
+      px(x, 7, 1, P.bark3); px(x, 8, 1, P.bark3); // neck cap
+      // red gingham top
+      rr(x, 4, 4, 8, 5, P.crimson);
+      px(x, 5, 5, P.linen); px(x, 7, 5, P.linen); px(x, 9, 5, P.linen); px(x, 11, 5, P.linen);
+      px(x, 6, 6, P.linen); px(x, 8, 6, P.linen); px(x, 10, 6, P.linen);
+      px(x, 5, 7, P.linen); px(x, 7, 7, P.linen); px(x, 9, 7, P.linen); px(x, 11, 7, P.linen);
+      rr(x, 4, 4, 8, 1, P.crimsonDeep);
+      px(x, 6, 9, '#fbf3dd'); px(x, 9, 9, '#fbf3dd'); // linen peeking below
     },
 
     'C': function (x, t) { // coffee station — kettle, cups, steam
@@ -400,20 +491,130 @@ window.G = window.G || {};
       rr(x, 0, 14, 16, 2, P.bark1);
     },
 
-    'R': function (x, t) { // clothes rack with hanging tops
+    'R': function (x, t) { // open wardrobe of hanging gingham tops
+      var P = G.Palette;
+      rr(x, 0, 0, 16, 16, P.bark1);              // wardrobe carcass
+      rr(x, 1, 1, 14, 14, P.parchment);          // back panel
+      rr(x, 0, 0, 16, 1, P.bark3);
+      rr(x, 1, 2, 14, 1, P.bark2);               // rail
+      // three hangers with checked tops
+      px(x, 3, 2, P.bark3); px(x, 8, 2, P.bark3); px(x, 12, 2, P.bark3);
+      rr(x, 2, 4, 4, 6, P.crimson);
+      px(x, 3, 5, P.linen); px(x, 5, 5, P.linen); px(x, 4, 6, P.linen);
+      px(x, 3, 7, P.linen); px(x, 5, 7, P.linen); px(x, 4, 8, P.linen);
+      rr(x, 7, 4, 4, 6, P.poorIndigo);
+      px(x, 8, 5, P.poorFade); px(x, 10, 5, P.poorFade); px(x, 9, 6, P.poorFade);
+      px(x, 8, 7, P.poorFade); px(x, 10, 7, P.poorFade); px(x, 9, 8, P.poorFade);
+      rr(x, 11, 4, 4, 6, P.marketGreen);
+      px(x, 12, 5, P.meadow3); px(x, 14, 5, P.meadow3); px(x, 13, 6, P.meadow3);
+      px(x, 12, 7, P.meadow3); px(x, 14, 7, P.meadow3);
+      rr(x, 1, 13, 14, 2, P.bark2);              // folded fabric at the bottom
+      rr(x, 2, 13, 4, 1, P.terracotta); rr(x, 8, 13, 4, 1, P.plum);
+      rr(x, 0, 15, 16, 1, P.outline);
+    },
+
+    'a': function (x, t) { // cutting table LEFT — wood edge + shears on the mat
       var P = G.Palette;
       drawGround(x, t, false);
-      rr(x, 1, 1, 14, 2, P.bark1);               // bar
-      rr(x, 1, 1, 2, 14, P.bark1);               // posts
-      rr(x, 13, 1, 2, 14, P.bark1);
-      px(x, 2, 1, P.bark3); px(x, 13, 1, P.bark3);
-      // three hanging tops (gingham reds, indigo, market green)
-      px(x, 4, 3, P.bark3); rr(x, 3, 4, 3, 5, P.crimson);
-      px(x, 4, 5, P.linen); px(x, 3, 6, P.linen); px(x, 5, 7, P.linen);
-      px(x, 8, 3, P.bark3); rr(x, 7, 4, 3, 5, P.poorIndigo);
-      px(x, 8, 6, P.poorFade);
-      px(x, 12, 3, P.bark3); rr(x, 11, 4, 3, 5, P.marketGreen);
-      px(x, 12, 5, P.meadow3);
+      rr(x, 0, 2, 16, 12, P.bark2);              // table
+      rr(x, 0, 2, 16, 1, P.bark3);
+      rr(x, 3, 4, 13, 8, P.marketGreen);         // cutting mat (continues right)
+      rr(x, 3, 4, 13, 1, P.meadow1);
+      rr(x, 3, 8, 13, 1, P.meadow1);             // mat grid
+      rr(x, 8, 4, 1, 8, P.meadow1);
+      rr(x, 13, 4, 1, 8, P.meadow1);
+      // tailor's shears
+      px(x, 5, 6, P.silver); px(x, 6, 7, P.silver); px(x, 7, 8, P.silver);
+      px(x, 8, 9, P.silver); px(x, 6, 9, P.silver); px(x, 5, 10, P.crimson);
+      rr(x, 0, 13, 16, 1, P.bark1);
+      rr(x, 1, 14, 2, 2, P.bark1); // leg
+    },
+
+    'd': function (x, t) { // cutting table MID — pattern papers + measuring tape
+      var P = G.Palette;
+      drawGround(x, t, false);
+      rr(x, 0, 2, 16, 12, P.bark2);
+      rr(x, 0, 2, 16, 1, P.bark3);
+      rr(x, 0, 4, 16, 8, P.marketGreen);
+      rr(x, 0, 4, 16, 1, P.meadow1);
+      rr(x, 0, 8, 16, 1, P.meadow1);
+      rr(x, 4, 4, 1, 8, P.meadow1);
+      rr(x, 10, 4, 1, 8, P.meadow1);
+      // pattern papers, slightly askew
+      rr(x, 2, 5, 6, 5, P.linen);
+      rr(x, 6, 7, 7, 5, '#fbf3dd');
+      px(x, 3, 6, P.taupe); px(x, 5, 7, P.taupe); px(x, 8, 9, P.taupe); px(x, 10, 10, P.taupe);
+      px(x, 4, 8, P.outline); px(x, 9, 8, P.outline);
+      // measuring tape curl
+      px(x, 13, 5, P.gold); px(x, 14, 6, P.gold); px(x, 13, 7, P.gold); px(x, 12, 6, P.gold);
+      rr(x, 0, 13, 16, 1, P.bark1);
+    },
+
+    'A': function (x, t) { // cutting table RIGHT — thread spools + pincushion
+      var P = G.Palette;
+      drawGround(x, t, false);
+      rr(x, 0, 2, 16, 12, P.bark2);
+      rr(x, 0, 2, 16, 1, P.bark3);
+      rr(x, 0, 4, 13, 8, P.marketGreen);
+      rr(x, 0, 4, 13, 1, P.meadow1);
+      rr(x, 0, 8, 13, 1, P.meadow1);
+      rr(x, 6, 4, 1, 8, P.meadow1);
+      // standing spools
+      rr(x, 2, 5, 2, 3, P.crimson); px(x, 2, 5, P.bark3);
+      rr(x, 5, 5, 2, 3, P.poorIndigo); px(x, 5, 5, P.bark3);
+      rr(x, 8, 5, 2, 3, P.gold); px(x, 8, 5, P.bark3);
+      // pincushion
+      rr(x, 3, 9, 4, 3, P.crimson);
+      px(x, 4, 8, P.silver); px(x, 6, 8, P.silver);
+      rr(x, 0, 13, 16, 1, P.bark1);
+      rr(x, 13, 14, 2, 2, P.bark1); // leg
+    },
+
+    's': function (x, t) { // sewing side table — spools, shears, pincushion
+      var P = G.Palette;
+      drawGround(x, t, false);
+      rr(x, 1, 3, 14, 10, P.bark3);              // table top
+      rr(x, 1, 3, 14, 1, P.parchment);
+      rr(x, 1, 12, 14, 1, P.bark1);
+      rr(x, 2, 13, 2, 2, P.bark1); rr(x, 12, 13, 2, 2, P.bark1);
+      rr(x, 3, 5, 2, 3, P.crimson); px(x, 3, 5, P.bark2);   // spools
+      rr(x, 6, 5, 2, 3, P.marketGreen); px(x, 6, 5, P.bark2);
+      rr(x, 9, 5, 2, 3, P.poorIndigo); px(x, 9, 5, P.bark2);
+      px(x, 12, 6, P.silver); px(x, 13, 7, P.silver);        // needle
+      rr(x, 4, 9, 4, 3, P.crimson);                          // pincushion
+      px(x, 5, 8, P.silver); px(x, 7, 8, P.silver);
+      px(x, 10, 10, P.gold);                                 // thimble
+    },
+
+    'N': function (x, t) { // checkout — brass register on the counter
+      var P = G.Palette;
+      drawGround(x, t, false);
+      rr(x, 1, 4, 14, 8, P.bark3);               // counter top (joins T neighbors)
+      rr(x, 1, 4, 14, 2, P.parchment);
+      rr(x, 1, 11, 14, 1, P.bark1);
+      rr(x, 2, 12, 2, 3, P.bark1); rr(x, 12, 12, 2, 3, P.bark1);
+      rr(x, 4, 1, 8, 6, P.soot);                 // register body
+      rr(x, 4, 1, 8, 1, P.stone3);
+      rr(x, 5, 3, 6, 1, P.goldRegal);            // keys
+      px(x, 5, 4, P.gold); px(x, 7, 4, P.gold); px(x, 9, 4, P.gold);
+      rr(x, 6, 0, 4, 1, P.parchment);            // receipt
+      px(x, 13, 5, P.gold);                       // service bell
+      rr(x, 4, 1, 1, 6, P.outline); rr(x, 11, 1, 1, 6, P.outline);
+    },
+
+    'i': function (x, t) { // hanging plant against the wall
+      var P = G.Palette;
+      rr(x, 0, 0, 16, 16, t.wall ? t.wall[1] : P.parchment);
+      if (t.wainscot) { px(x, 3, 2, t.wall[2]); px(x, 12, 4, t.wall[2]); }
+      px(x, 7, 0, P.outline); px(x, 8, 1, P.outline); px(x, 7, 2, P.outline); // chain
+      rr(x, 5, 3, 6, 3, P.terracotta);           // hanging pot
+      rr(x, 5, 3, 6, 1, P.terracottaPale);
+      rr(x, 4, 5, 8, 4, P.meadow2);              // foliage ball
+      rr(x, 5, 4, 6, 2, P.meadow3);
+      // trailing vines
+      px(x, 4, 9, P.meadow2); px(x, 3, 10, P.meadow3); px(x, 4, 11, P.meadow1); px(x, 3, 12, P.meadow2);
+      px(x, 11, 9, P.meadow2); px(x, 12, 10, P.meadow3); px(x, 11, 11, P.meadow2); px(x, 12, 12, P.meadow1);
+      px(x, 7, 9, P.meadow1); px(x, 8, 10, P.meadow3);
     },
 
     'P': function (x, t) { // potted plant — the touch of greenery

@@ -142,7 +142,12 @@ window.G = window.G || {};
     // apron
     if (s.apron && !up) {
       rr(x, 6, tTop + 2, 4, tH - 2 + (s.dress ? 3 : 0), s.apron);
-      if (s.heroine) { px(x, 7, tTop + 3, P.outline); px(x, 8, tTop + 4, P.outline); } // pin dashes
+      if (s.heroine) {
+        px(x, 7, tTop + 3, P.outline); px(x, 8, tTop + 4, P.outline); // pin dashes
+        var ahem = tTop + tH + (s.dress ? 0 : -1);
+        px(x, 6, ahem, P.crimson); px(x, 8, ahem, P.crimson);         // gingham apron trim
+        px(x, 7, ahem + 1, P.crimson);
+      }
     }
     if (s.patch && !up) px(x, tx0 + 1, tTop + 2, P.patchBrown);
     // heroine details: measuring-tape sash + pincushion wristband
@@ -181,6 +186,7 @@ window.G = window.G || {};
         px(x, 6, faceTop + 2, P.outline);
         px(x, 9, faceTop + 2, P.outline);
         px(x, 7, faceTop + 1, G.Palette.linen);
+        if (s.heroine) { px(x, 4, faceTop + 3, G.Palette.terracottaPale); px(x, 11, faceTop + 3, G.Palette.terracottaPale); } // blush
       }
     }
 

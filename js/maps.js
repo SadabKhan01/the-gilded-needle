@@ -16,6 +16,7 @@ window.G = window.G || {};
     // cozy-revamp props: sofa, fireplace, mannequin, coffee station,
     // clothes rack, plant, shopfront window, shop sign ('u' rug is walkable)
     'o': 1, 'k': 1, 'M': 1, 'C': 1, 'R': 1, 'P': 1, 'W': 1, 'Q': 1,
+    'K': 1, 'O': 1, 'a': 1, 'd': 1, 'A': 1, 's': 1, 'N': 1, 'i': 1,
   };
 
   // ---------------------------------------------------------------- builder
@@ -151,34 +152,45 @@ window.G = window.G || {};
     // stations, racks, mannequins, checkout. Per the cozy concept art.
     var g = mk(26, 16, '#');
     rect(g, 1, 2, 24, 13, '.');
-    // north wall: fireplace, fabric shelves, window, rack, coffee, plant
-    put(g, 'k', [[2, 1], [3, 1]]);
-    put(g, 'S', [[8, 1], [9, 1], [10, 1]]);
+    // north wall: stone hearth, hanging plants, shelves, window, wardrobe, coffee
+    put(g, 'k', [[2, 1]]);
+    put(g, 'K', [[3, 1]]);
+    set(g, 6, 1, 'i');
+    put(g, 'S', [[8, 1], [9, 1]]);
+    set(g, 11, 1, 'i');
     set(g, 13, 1, 'B');
     put(g, 'R', [[16, 1], [17, 1]]);
+    set(g, 19, 1, 'i');
     set(g, 21, 1, 'C');
     set(g, 23, 1, 'P');
-    // hearth lounge: rug, sofa, low table
+    // hearth lounge: rug, sofa (two connected halves), low table
     rect(g, 1, 3, 5, 4, 'u');
-    put(g, 'o', [[2, 4], [3, 4]]);
-    set(g, 3, 5, 'h');
+    set(g, 2, 4, 'o');
+    set(g, 3, 4, 'O');
+    set(g, 2, 6, 'h');
     // window display mannequin
     set(g, 13, 3, 'M');
-    // the cutting table (patterns & catalogs)
-    put(g, 'T', [[10, 6], [11, 6], [12, 6]]);
-    // two sewing stations along the west wall
+    // the cutting table — green mat, patterns, shears
+    set(g, 10, 6, 'a');
+    set(g, 11, 6, 'd');
+    set(g, 12, 6, 'A');
+    set(g, 13, 7, 'h');
+    // two sewing stations along the west wall (machine + side table)
     put(g, 'm', [[2, 9], [2, 12]]);
-    put(g, 'T', [[3, 9], [3, 12]]);
-    // checkout counter
-    put(g, 'T', [[16, 8], [17, 8], [18, 8]]);
-    // racks, second mannequin, bed nook, greenery
-    put(g, 'R', [[24, 4], [24, 5], [24, 6]]);
-    set(g, 21, 11, 'M');
+    put(g, 's', [[3, 9], [3, 12]]);
+    // checkout counter with the brass register
+    set(g, 16, 8, 'T');
+    set(g, 17, 8, 'N');
+    set(g, 18, 8, 'T');
+    // wardrobe wall, dressing corner with its own rug, bed nook, greenery
+    put(g, 'R', [[24, 4], [24, 5]]);
+    put(g, 'S', [[24, 9], [24, 10]]);
+    rect(g, 19, 11, 3, 2, 'u');
+    set(g, 20, 11, 'M');
     set(g, 23, 13, 'e');
     put(g, 'P', [[1, 13], [19, 2]]);
-    put(g, 'f', [[7, 13], [24, 9]]);
     set(g, 13, 15, 'D');                              // door to the plaza
-    speckle(g, 0.10);
+    speckle(g, 0.35);
     return {
       id: 'shop', name: 'The Gilded Needle', theme: 'shop', music: 'shop',
       grid: g,

@@ -550,7 +550,7 @@ window.G = window.G || {};
 
       // 4. sewing table / 5. counter / 6. bed (shop only)
       if (map.id === 'shop') {
-        if (map.sewingTable && (matches(f, map.sewingTable) || map.charAt(f.tx, f.ty) === 'm')) {
+        if (map.sewingTable && (matches(f, map.sewingTable) || map.charAt(f.tx, f.ty) === 'm' || map.charAt(f.tx, f.ty) === 's')) {
           G.UI.prompt = 'E — Sew';
           if (pressE) G.UI.crafting.open();
           return;
@@ -679,6 +679,25 @@ window.G = window.G || {};
       }
       ents.sort(function (a, b) { return a.y - b.y; });
       for (i = 0; i < ents.length; i++) ents[i].draw(ctx);
+
+      // the hearth glows, always — warm flicker on the lounge
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      for (ty = y0; ty <= y1; ty++) {
+        for (tx = x0; tx <= x1; tx++) {
+          var hch = map.charAt(tx, ty);
+          if (hch === 'k' || hch === 'K') {
+            var hx = tx * 16 + (hch === 'k' ? 14 : 2), hy = ty * 16 + 9;
+            var hr = 17 + Math.sin(G.Engine.time * 7 + tx) * 2;
+            var hg = ctx.createRadialGradient(hx, hy, 2, hx, hy, hr);
+            hg.addColorStop(0, 'rgba(242,193,78,0.20)');
+            hg.addColorStop(1, 'rgba(242,193,78,0)');
+            ctx.fillStyle = hg;
+            ctx.fillRect(hx - hr, hy - hr, hr * 2, hr * 2);
+          }
+        }
+      }
+      ctx.restore();
 
       // night glows on lamps & windows
       if (G.state.time >= 1140 && map.id !== 'shop') {
