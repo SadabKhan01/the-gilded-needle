@@ -377,6 +377,12 @@ window.G = window.G || {};
       var t = G.state.time;
       var open = t >= G.Data.customers.openHours[0] && t < G.Data.customers.openHours[1];
       var gameMin = dt / bal().clock.secPerGameMinute;
+      var map = G.Maps.get('shop');
+      var doorX = (map.spawn ? map.spawn.tx : 13) * 16 + 8;
+      var doorY = (map.spawn ? map.spawn.ty : 14) * 16 + 8;
+      var counterSpot = map.counter || { tx: 17, ty: 8 };
+      var counterX = counterSpot.tx * 16 + 8;
+      var counterY = (counterSpot.ty + 1) * 16 + 4;
 
       // spawn
       if (open) {
@@ -393,16 +399,31 @@ window.G = window.G || {};
       }
 
       // customer movement / lifecycle
-      var map = G.Maps.get('shop');
-      var doorX = 11 * 16 + 8, doorY = 12 * 16 + 8;
-      var counterX = 10 * 16 + 8, counterY = 9 * 16 + 4;
       for (var i = this.customers.length - 1; i >= 0; i--) {
         var c = this.customers[i];
         c.animT = (c.animT || 0) + dt;
         if (c.state === 'entering') {
-          var arrived = moveToward(c, counterX, counterY, 45 * dt);
+          if (counterReservedByOther(this.customers, c)) {
+            c.state = 'to_sofa';
+            assignSofaSeat(c, map, this.customers);
+          }
+          var arrived = c.state === 'entering' && moveToward(c, counterX, counterY, 45 * dt);
           c.dir = c.y > counterY ? 'up' : (c.x < counterX ? 'right' : 'left');
           if (arrived) { c.state = 'waiting'; c.dir = 'up'; }
+        } else if (c.state === 'to_sofa') {
+          assignSofaSeat(c, map, this.customers);
+          var sx = c.seatTx * 16 + 8, sy = c.seatTy * 16 + 12;
+          var sat = moveToward(c, sx, sy, 45 * dt);
+          c.dir = c.y > sy ? 'up' : (c.x < sx ? 'right' : 'left');
+          if (sat) { c.state = 'seated'; c.dir = 'down'; }
+        } else if (c.state === 'seated') {
+          if (!counterReservedByOther(this.customers, c) && open) {
+            c.state = 'to_counter';
+          }
+        } else if (c.state === 'to_counter') {
+          var reached = moveToward(c, counterX, counterY, 45 * dt);
+          c.dir = c.y > counterY ? 'up' : (c.x < counterX ? 'right' : 'left');
+          if (reached) { c.state = 'waiting'; c.dir = 'up'; }
         } else if (c.state === 'waiting') {
           c.wait -= gameMin;
           if (c.wait <= 0 || !open) {
@@ -421,6 +442,8 @@ window.G = window.G || {};
       var tierIdx = this.rollTier();
       var tierId = G.Data.tiers[tierIdx].id;
       var want = { tier: tierIdx + 1, garmentId: null };
+      var map = G.Maps.get('shop');
+      var spawn = map && map.spawn ? map.spawn : { tx: 13, ty: 14 };
       if (Math.random() < G.Data.customers.specificChance) {
         var opts = [];
         var glist = G.Data.garmentsByTier(tierIdx + 1);
@@ -430,7 +453,7 @@ window.G = window.G || {};
       this.customers.push({
         sprite: 'customer_' + tierId + '_' + (Math.random() < 0.5 ? 0 : 1),
         tier: tierIdx, want: want, state: 'entering',
-        x: 11 * 16 + 8, y: 12 * 16 + 8, dir: 'up',
+        x: spawn.tx * 16 + 8, y: spawn.ty * 16 + 8, dir: 'up',
         wait: G.Data.customers.patience, animT: 0,
       });
       G.Audio.sfx('doorbell');
@@ -464,6 +487,35 @@ window.G = window.G || {};
     o.x += (dx / d) * step;
     o.y += (dy / d) * step;
     return false;
+  }
+
+  function counterReservedByOther(customers, customer) {
+    for (var i = 0; i < customers.length; i++) {
+      var c = customers[i];
+      if (c === customer) continue;
+      if (c.state === 'entering' || c.state === 'to_counter' || c.state === 'waiting') return true;
+    }
+    return false;
+  }
+
+  function assignSofaSeat(customer, map, customers) {
+    if (customer.seatTx !== undefined) return;
+    var seats = map.sofa && map.sofa.seats ? map.sofa.seats : null;
+    var seat = seats && seats.length ? seats[0] : { tx: 2, ty: 4 };
+    if (seats && seats.length > 1) {
+      for (var s = 0; s < seats.length; s++) {
+        var taken = false;
+        for (var i = 0; i < customers.length; i++) {
+          if (customers[i] !== customer && customers[i].seatTx === seats[s].tx && customers[i].seatTy === seats[s].ty) {
+            taken = true;
+            break;
+          }
+        }
+        if (!taken) { seat = seats[s]; break; }
+      }
+    }
+    customer.seatTx = seat.tx;
+    customer.seatTy = seat.ty;
   }
 
   // =====================================================================

@@ -72,15 +72,18 @@ window.G = window.G || {};
     put(g, 'f', [[23, 16], [40, 16], [23, 27], [40, 27], [30, 19], [33, 24]]);
     put(g, 'l', [[24, 17], [39, 17], [24, 26], [39, 26]]);
 
-    // The Gilded Needle — storybook shopfront NW of the plaza:
-    // lit display windows flank the door, hanging sign above, lavender pots
-    rect(g, 22, 11, 5, 4, 'B');
-    set(g, 23, 14, 'W');
-    set(g, 25, 14, 'W');
+    // The Gilded Needle — storybook shopfront NW of the plaza, now closer
+    // to the reference facade: cream masonry, warm display windows, sign,
+    // ivy/flower boxes, and an obvious center door.
+    rect(g, 20, 8, 9, 6, 'B');
+    put(g, 'W', [[21, 12], [22, 12], [26, 12], [27, 12]]);
+    set(g, 24, 10, 'Q');
     set(g, 24, 13, 'Q');
     set(g, 24, 14, 'D');                              // shop door → landing (24,15)
-    put(g, 'f', [[23, 15], [25, 15]]);                // lavender by the door
-    set(g, 21, 15, 't');                              // little topiary
+    put(g, 'f', [[21, 14], [22, 14], [26, 14], [27, 14], [20, 15], [28, 15]]);
+    put(g, 'P', [[19, 14], [29, 13]]);
+    set(g, 19, 15, 't');                              // little topiary
+    set(g, 29, 12, 'l');                              // warm lamp by hanging sign
 
     // West arm — Cinder Row (poor quarter)
     rect(g, 2, 18, 20, 6, '-');
@@ -130,7 +133,7 @@ window.G = window.G || {};
       grid: g,
       spawn: { tx: 32, ty: 26 },
       portals: [
-        { tx: 24, ty: 14, to: 'shop',            ttx: 13, tty: 14, dir: 'up',    label: 'The Gilded Needle' },
+        { tx: 24, ty: 14, to: 'shop',            ttx: 14, tty: 28, dir: 'up',    label: 'The Gilded Needle' },
         { tx: 2,  ty: 20, to: 'old_mill',        ttx: 20, tty: 27, dir: 'up',    label: 'The Weftworks' },
         { tx: 31, ty: 42, to: 'river_warehouse', ttx: 21, tty: 27, dir: 'up',    label: 'The Madder Docks' },
         { tx: 61, ty: 20, to: 'silk_grove',      ttx: 20, tty: 29, dir: 'up',    label: 'The Larkspur Silk Garden' },
@@ -148,59 +151,69 @@ window.G = window.G || {};
   // ---------------------------------------------------------------- shop
 
   function buildShop() {
-    // The atelier — fireplace lounge, coffee, cutting table, two sewing
-    // stations, racks, mannequins, checkout. Per the cozy concept art.
-    var g = mk(26, 16, '#');
-    rect(g, 1, 2, 24, 13, '.');
-    // north wall: stone hearth, hanging plants, shelves, window, wardrobe, coffee
+    // The atelier — a long, cozy top-down shop: hearth lounge, work tables,
+    // wardrobe displays, coffee/check-out counter, and a front door at bottom.
+    var g = mk(28, 30, '#');
+    rect(g, 1, 1, 26, 28, '.');
+
+    // north wall: fireplace, hanging plants, shelves, coffee service
     put(g, 'k', [[2, 1]]);
     put(g, 'K', [[3, 1]]);
-    set(g, 6, 1, 'i');
-    put(g, 'S', [[8, 1], [9, 1]]);
-    set(g, 11, 1, 'i');
-    set(g, 13, 1, 'B');
-    put(g, 'R', [[16, 1], [17, 1]]);
-    set(g, 19, 1, 'i');
-    set(g, 21, 1, 'C');
-    set(g, 23, 1, 'P');
-    // hearth lounge: rug, sofa (two connected halves), low table
-    rect(g, 1, 3, 5, 4, 'u');
-    set(g, 2, 4, 'o');
-    set(g, 3, 4, 'O');
-    set(g, 2, 6, 'h');
-    // window display mannequin
-    set(g, 13, 3, 'M');
-    // the cutting table — green mat, patterns, shears
-    set(g, 10, 6, 'a');
-    set(g, 11, 6, 'd');
-    set(g, 12, 6, 'A');
-    set(g, 13, 7, 'h');
-    // two sewing stations along the west wall (machine + side table)
-    put(g, 'm', [[2, 9], [2, 12]]);
-    put(g, 's', [[3, 9], [3, 12]]);
-    // checkout counter with the brass register
-    set(g, 16, 8, 'T');
-    set(g, 17, 8, 'N');
-    set(g, 18, 8, 'T');
-    // wardrobe wall, dressing corner with its own rug, bed nook, greenery
-    put(g, 'R', [[24, 4], [24, 5]]);
-    put(g, 'S', [[24, 9], [24, 10]]);
-    rect(g, 19, 11, 3, 2, 'u');
-    set(g, 20, 11, 'M');
-    set(g, 23, 13, 'e');
-    put(g, 'P', [[1, 13], [19, 2]]);
-    set(g, 13, 15, 'D');                              // door to the plaza
+    put(g, 'i', [[7, 1], [12, 1], [17, 1]]);
+    put(g, 'S', [[20, 1], [21, 1]]);
+    set(g, 24, 1, 'C');
+    set(g, 26, 2, 'P');
+
+    // hearth lounge from the concept: rug, sofa, low table, plants
+    rect(g, 1, 5, 7, 6, 'u');
+    set(g, 2, 7, 'o');
+    set(g, 3, 7, 'O');
+    set(g, 5, 8, 'h');
+    put(g, 'P', [[1, 11], [6, 4]]);
+
+    // left-window sewing stations and fabric spools
+    put(g, 'B', [[1, 14], [1, 18], [1, 22]]);
+    put(g, 'm', [[4, 15], [4, 20]]);
+    put(g, 's', [[5, 15], [5, 20]]);
+    put(g, 'S', [[2, 24], [3, 24]]);
+    rect(g, 3, 25, 3, 3, 'u');
+    set(g, 4, 26, 'M');
+
+    // central cutting/catalog tables: patterns, shears, bolts below
+    put(g, 'a', [[12, 7], [12, 19]]);
+    put(g, 'd', [[13, 7], [13, 19]]);
+    put(g, 'A', [[14, 7], [14, 19]]);
+    put(g, 'h', [[16, 8], [16, 20]]);
+    put(g, 'S', [[12, 10], [13, 10], [14, 22]]);
+
+    // right wall: wardrobe racks, try-on mannequins, counter and coffee
+    put(g, 'R', [[26, 7], [26, 8], [26, 9], [26, 10], [26, 11], [26, 12]]);
+    put(g, 'S', [[26, 17], [26, 18], [26, 22], [26, 23], [26, 24]]);
+    rect(g, 22, 12, 3, 3, 'u');
+    set(g, 23, 13, 'M');
+    set(g, 24, 22, 'M');
+    set(g, 24, 26, 'e');
+    set(g, 22, 5, 'T');
+    set(g, 23, 5, 'N');
+    set(g, 24, 5, 'T');
+    put(g, 'P', [[22, 16], [24, 20], [25, 27]]);
+
+    // warm entry, with a little mat like the exterior reference
+    rect(g, 12, 27, 5, 1, 'u');
+    set(g, 14, 29, 'D');                              // door to the plaza
     speckle(g, 0.35);
     return {
       id: 'shop', name: 'The Gilded Needle', theme: 'shop', music: 'shop',
       grid: g,
-      spawn: { tx: 13, ty: 14 },
-      sewingTable: { tx: 3, ty: 9 },
-      counter: { tx: 17, ty: 8 },
+      spawn: { tx: 14, ty: 28 },
+      sewingTable: { tx: 4, ty: 15 },
+      catalogTable: { tx: 13, ty: 7 },
+      counter: { tx: 23, ty: 5 },
+      sofa: { seats: [{ tx: 2, ty: 7 }, { tx: 3, ty: 7 }] },
       portals: [
-        { tx: 13, ty: 15, to: 'city', ttx: 24, tty: 15, dir: 'down', label: 'Spindle Square' },
+        { tx: 14, ty: 29, to: 'city', ttx: 24, tty: 15, dir: 'down', label: 'Spindle Square' },
       ],
-      hints: { odile_marchand: { tx: 8, ty: 8 }, mrs_tansy: { tx: 15, ty: 10 } },
+      hints: { odile_marchand: { tx: 9, ty: 12 }, mrs_tansy: { tx: 20, ty: 7 } },
     };
   }
 
@@ -216,7 +229,8 @@ window.G = window.G || {};
     // slumped bolts, rubble, crates
     put(g, 'r', [[12, 8], [30, 9], [5, 21], [22, 14], [36, 22], [10, 25]]);
     put(g, 'c', [[3, 9], [38, 7], [20, 22], [33, 25]]);
-    put(g, 'g', [[7, 24], [28, 24], [17, 8]]);
+    put(g, 'g', [[7, 24], [28, 24], [17, 8], [4, 11], [36, 14], [24, 25]]);
+    put(g, 'P', [[4, 24], [38, 21], [22, 3]]);
     // storeroom partitions (little rooms that make gathering feel like exploring)
     rect(g, 2, 13, 1, 3, '#'); rect(g, 12, 2, 1, 2, '#'); rect(g, 30, 26, 1, 2, '#');
     // rotten floorboards on the old walkways
@@ -249,7 +263,8 @@ window.G = window.G || {};
     // dye vats & crates staining the puddles
     put(g, 'c', [[5, 4], [6, 4], [14, 6], [22, 4], [30, 5], [13, 14], [23, 16], [5, 22], [17, 24], [30, 23]]);
     put(g, 'r', [[8, 12], [28, 12]]);
-    put(g, 'g', [[3, 26], [32, 3]]);
+    put(g, 'g', [[3, 26], [32, 3], [12, 9], [31, 21], [39, 14]]);
+    put(g, 'P', [[3, 3], [40, 26], [26, 8]]);
     // dye spills — stinging fumes
     put(g, 'x', [[7, 8], [8, 8], [24, 13], [25, 13], [15, 20], [15, 21], [29, 18]]);
     // impounded fabric lots
@@ -280,7 +295,9 @@ window.G = window.G || {};
     frame(g, 28, 4, 9, 7, 'B');
     set(g, 32, 10, '.');                              // its doorway
     // overgrowth & thorn brambles
-    put(g, 'g', [[4, 8], [14, 5], [21, 24], [30, 27], [11, 16], [34, 18], [19, 21]]);
+    put(g, 'g', [[4, 8], [14, 5], [21, 24], [30, 27], [11, 16], [34, 18], [19, 21],
+                 [8, 28], [24, 6], [36, 26]]);
+    put(g, 'P', [[3, 12], [27, 12], [35, 28]]);
     put(g, 'f', [[9, 6], [17, 19], [29, 24], [35, 12]]);
     put(g, 'x', [[13, 10], [14, 10], [23, 22], [23, 23], [31, 19], [9, 24]]);
     // cocoon nets — wild grovesilk
@@ -316,6 +333,8 @@ window.G = window.G || {};
     // dust-sheeted reserve: crates, rubble, one spilling chest
     put(g, 'c', [[3, 5], [17, 6], [32, 6], [8, 16], [30, 17], [12, 26], [25, 27], [40, 26]]);
     put(g, 'r', [[26, 5], [18, 16], [38, 25], [7, 6]]);
+    put(g, 'g', [[6, 8], [19, 14], [37, 18], [11, 24], [34, 27]]);
+    put(g, 'P', [[4, 13], [39, 13]]);
     // the royal fabric reserve
     put(g, 'n', [[3, 6], [40, 5], [3, 26], [40, 24], [21, 15], [10, 26], [30, 5], [37, 15]]);
     set(g, 21, 30, 'D');
@@ -374,7 +393,9 @@ window.G = window.G || {};
       hints: def.hints || {},
     };
     if (def.sewingTable) m.sewingTable = def.sewingTable;
+    if (def.catalogTable) m.catalogTable = def.catalogTable;
     if (def.counter) m.counter = def.counter;
+    if (def.sofa) m.sofa = def.sofa;
 
     // validate rectangularity + collect nodes
     for (var y = 0; y < m.h; y++) {
